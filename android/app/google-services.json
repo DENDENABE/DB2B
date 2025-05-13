@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "888958928898",
+    "project_id": "db2b-ea049",
+    "storage_bucket": "db2b-ea049.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:888958928898:android:85515664ca9d435805bf1b",
+        "android_client_info": {
+          "package_name": "com.example.db2b"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnS-u2kMr5Zb-4QLt3BCZXTBGPJtQBSX8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
