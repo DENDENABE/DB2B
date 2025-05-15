@@ -85,4 +85,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'db2b-ea049.firebasestorage.app',
     measurementId: 'G-Q19EEVS901',
   );
+
 }

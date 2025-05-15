@@ -1,8 +1,11 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // ★ FirebaseAuthをインポート
 import 'firebase_options.dart';
-import 'screens/customer_list_page.dart'; // または初期画面
+import 'screens/customer_list_page.dart'; // ログイン後のメイン画面
+import 'screens/login_page.dart';          // ログイン画面
+import 'services/auth_service.dart';        // ★ AuthServiceをインポート
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,55 +15,73 @@ void main() async {
   runApp(MyApp());
 }
 
-// クリーム色の定義 (例)
-// 色は #RRGGBB 形式の16進数や、名前付きの色定数、Color.fromRGBO などで指定できます。
-// より正確なクリーム色を求める場合は、カラーコードで指定してください。
-// 例: const Color creamColor = Color(0xFFFFFDD0); // 一般的なクリーム色
 const Color creamColor = Color(0xFFF5F5DC); // ベージュに近いクリーム色 (Beige)
-// const Color creamColor = Color(0xFFFAF0E6); // リネン色 (Linen)
 
 class MyApp extends StatelessWidget {
+  // ★ AuthServiceのインスタンスをここで作成（またはProviderなどで共有）
+  final AuthService _authService = AuthService();
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'MoTran顧客管理アプリ',
       theme: ThemeData(
-        // scaffoldBackgroundColor: Colors.amber[50], // 薄い黄色 (クリーム色に近い)
-        scaffoldBackgroundColor: creamColor, // ★ 全画面の基本的な背景色をクリーム色に設定
-
-        // AppBarの色も調整する場合 (任意)
-        // primarySwatch をクリーム色に近い色にすると、AppBarなどもそれに準じた色になりますが、
-        // primarySwatch は MaterialColor である必要があるため、単色のクリーム色を直接指定するのは難しいです。
-        // 個別に AppBarTheme で設定する方がコントロールしやすいです。
-        // primarySwatch: Colors.orange, // 例えばオレンジ系をベースにするなど
-
+        scaffoldBackgroundColor: creamColor,
         appBarTheme: AppBarTheme(
-          backgroundColor: Colors.brown[500], // AppBarの背景色 (クリーム色と合う色を選択)
-          foregroundColor: Colors.white,      // AppBarのテキストやアイコンの色
+          backgroundColor: Colors.brown[500],
+          foregroundColor: Colors.white,
         ),
-
-        // FloatingActionButtonの色 (任意)
         floatingActionButtonTheme: FloatingActionButtonThemeData(
-          backgroundColor: Colors.brown[600], // FABの色
+          backgroundColor: Colors.brown[600],
         ),
-
-        // SnackBarのテーマ (前回設定したもの)
         snackBarTheme: SnackBarThemeData(
-          backgroundColor: Colors.brown[800], // SnackBarの色 (クリーム色と合うように調整)
-          contentTextStyle: TextStyle(color: Colors.grey),
+          backgroundColor: Colors.brown[800],
+          // ★ SnackBarのテキスト色を白に変更 (背景が濃い茶色なので)
+          contentTextStyle: TextStyle(color: Colors.white),
         ),
-
-        // Cardの背景色 (任意、デフォルトは白に近い)
-        // cardTheme: CardTheme(
-        //   color: Colors.white, // またはクリーム色より少し明るい/暗い色
-        // ),
-
-        // CanvasColor (ダイアログやドロワーなどの背景色に影響することがある)
-        // canvasColor: creamColor, // scaffoldBackgroundColor と同じにするか、少し変えるか
-
-        // useMaterial3: true, // Material 3 を使用している場合は、色の扱いが少し異なる場合があります
       ),
-      home: CustomerListPage(), // または初期画面
+      // ★ homeプロパティをAuthWrapperに変更
+      home: AuthWrapper(authService: _authService),
+    );
+  }
+}
+
+// ★ 認証状態に応じて画面を切り替えるラッパーウィジェット
+class AuthWrapper extends StatelessWidget {
+  final AuthService authService;
+
+  AuthWrapper({required this.authService});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: authService.authStateChanges, // AuthServiceから認証状態のStreamを取得
+      builder: (context, snapshot) {
+        // 接続状態の確認
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold( // ローディング中もテーマが適用されるようにScaffoldでラップ
+            backgroundColor: creamColor, // ローディング画面の背景色
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        // エラー発生時の表示 (任意でより詳細なエラー表示も可能)
+        if (snapshot.hasError) {
+          return Scaffold(
+            backgroundColor: creamColor,
+            body: Center(child: Text('エラーが発生しました: ${snapshot.error}')),
+          );
+        }
+
+        // ユーザーデータ (Userオブジェクト) があればログイン済み
+        if (snapshot.hasData && snapshot.data != null) {
+          print('AuthWrapper: User is logged in - ${snapshot.data!.uid}');
+          return CustomerListPage(); // 顧客一覧画面へ
+        } else {
+          // ユーザーデータがなければ未ログイン
+          print('AuthWrapper: User is not logged in');
+          return LoginPage(); // ログイン画面へ
+        }
+      },
     );
   }
 }
